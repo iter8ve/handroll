@@ -27,7 +27,8 @@ class Configuration(object):
     def domain(self):
         if self._domain is None:
             raise AbortError(
-                _('You are missing a domain setting in the site section.'))
+                _("You are missing a domain setting in the site section.")
+            )
         return self._domain
 
     def load_from_arguments(self, args):
@@ -45,34 +46,36 @@ class Configuration(object):
 
     def load_from_file(self, config_file):
         """Load any configuration attributes from the provided config file."""
-        with open(config_file, 'r') as f:
-            self.parser.readfp(f)
-            if self.parser.has_option('site', 'domain'):
-                self._domain = self.parser.get('site', 'domain')
+        with open(config_file, "r") as f:
+            self.parser.read_file(f)
+            if self.parser.has_option("site", "domain"):
+                self._domain = self.parser.get("site", "domain")
 
-            if self.parser.has_option('site', 'outdir'):
-                outdir = os.path.expanduser(self.parser.get('site', 'outdir'))
+            if self.parser.has_option("site", "outdir"):
+                outdir = os.path.expanduser(self.parser.get("site", "outdir"))
                 if not os.path.isabs(outdir):
                     path = os.path.dirname(config_file)
                     outdir = os.path.abspath(os.sep.join([path, outdir]))
                 self.outdir = outdir
 
-            if self.parser.has_section('site'):
+            if self.parser.has_section("site"):
                 self._find_extensions(self.parser)
 
     def _find_extensions(self, parser):
         """Check if the site options have extensions to enable."""
-        for option in parser.options('site'):
-            if option.startswith('with_'):
+        for option in parser.options("site"):
+            if option.startswith("with_"):
                 try:
-                    extension = option.split('with_', 1)[1] or option
-                    enabled = parser.getboolean('site', option)
+                    extension = option.split("with_", 1)[1] or option
+                    enabled = parser.getboolean("site", option)
                     if enabled:
                         self.active_extensions.add(extension)
                 except ValueError:
-                    raise AbortError(_(
-                        'Cannot determine if {extension} is enabled.').format(
-                            extension=extension))
+                    raise AbortError(
+                        _(
+                            "Cannot determine if {extension} is enabled."
+                        ).format(extension=extension)
+                    )
 
 
 def build_config(config_file, args):

@@ -18,16 +18,14 @@ class Director(object):
     """
 
     SKIP_EXTENSION = (
-        '~',
-        '.swo',
-        '.swp',
-        '.swpx',
-        '.swx',
-        '4913',  # Vim makes a '4913' file for file system checking. Seriously.
+        "~",
+        ".swo",
+        ".swp",
+        ".swpx",
+        ".swx",
+        "4913",  # Vim makes a '4913' file for file system checking. Seriously.
     )
-    SKIP_FILES = (
-        Site.CONFIG,
-    )
+    SKIP_FILES = (Site.CONFIG,)
 
     def __init__(self, config, site, extensions):
         self.config = config
@@ -113,17 +111,18 @@ class Director(object):
 
     def _generate_output(self, outdir):
         if os.path.exists(outdir):
-            logger.info(_('Updating {outdir} ...').format(outdir=outdir))
+            logger.info(_("Updating {outdir} ...").format(outdir=outdir))
         else:
-            logger.info(_('Creating {outdir} ...').format(outdir=outdir))
+            logger.info(_("Creating {outdir} ...").format(outdir=outdir))
             os.mkdir(outdir)
 
         self._collect_frontmatter()
 
         for dirpath, dirnames, filenames in self.site.walk():
             output_dirpath = self._get_output_dirpath(dirpath, outdir)
-            logger.info(_('Populating {dirpath} ...').format(
-                dirpath=output_dirpath))
+            logger.info(
+                _("Populating {dirpath} ...").format(dirpath=output_dirpath)
+            )
 
             self._create_output_directories(dirnames, output_dirpath)
 
@@ -165,7 +164,7 @@ class Director(object):
             out = os.path.join(output_dirpath, dirname)
             # The directory may already exist for updates.
             if not os.path.exists(out):
-                logger.info(_('Creating directory {out} ...').format(out=out))
+                logger.info(_("Creating directory {out} ...").format(out=out))
                 os.mkdir(out)
 
     def _process_file(self, filepath, output_dirpath):
@@ -183,19 +182,24 @@ class Director(object):
         if self.config.timing:
             end = time.time()
             # Put at warn level to be independent of the verbose option.
-            logger.warn('[{0:.3f}s]'.format(end - start))
+            logger.warning("[{0:.3f}s]".format(end - start))
 
     def _should_skip(self, filename):
         """Determine if the file type should be skipped."""
         if filename.endswith(self.SKIP_EXTENSION):
             logger.debug(
-                _('Skipping {filename} with skipped file type ...').format(
-                    filename=filename))
+                _("Skipping {filename} with skipped file type ...").format(
+                    filename=filename
+                )
+            )
             return True
 
         if filename.endswith(self.SKIP_FILES):
-            logger.debug(_('Skipping special file {filename} ...').format(
-                filename=filename))
+            logger.debug(
+                _("Skipping special file {filename} ...").format(
+                    filename=filename
+                )
+            )
             return True
 
         return False

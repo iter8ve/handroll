@@ -4,8 +4,7 @@ import io
 import json
 import os
 
-from werkzeug.contrib.atom import AtomFeed
-from werkzeug.contrib.atom import FeedEntry
+from feedwerk.atom import AtomFeed, FeedEntry
 
 from handroll import date, logger
 from handroll.composers import Composer
@@ -30,23 +29,30 @@ class AtomComposer(Composer):
 
     .. literalinclude:: ../sample/atom_sample.atom
     """
-    output_extension = '.xml'
+
+    output_extension = ".xml"
 
     def compose(self, catalog, source_file, out_dir):
         root, ext = os.path.splitext(os.path.basename(source_file))
         filename = root + self.output_extension
         output_file = os.path.join(out_dir, filename)
         if self._needs_update(source_file, output_file):
-            logger.info(_('Generating Atom XML for {source_file} ...').format(
-                source_file=source_file))
+            logger.info(
+                _("Generating Atom XML for {source_file} ...").format(
+                    source_file=source_file
+                )
+            )
             feed = self._parse_feed(source_file)
 
-            with open(output_file, 'wb') as out:
-                out.write(feed.to_string().encode('utf-8'))
-                out.write(b'<!-- handrolled for excellence -->\n')
+            with open(output_file, "wb") as out:
+                out.write(feed.to_string().encode("utf-8"))
+                out.write(b"<!-- handrolled for excellence -->\n")
         else:
-            logger.debug(_('Skipping {filename} ... It is up to date.').format(
-                filename=filename))
+            logger.debug(
+                _("Skipping {filename} ... It is up to date.").format(
+                    filename=filename
+                )
+            )
 
     def get_output_extension(self, filename):
         return self.output_extension
@@ -69,31 +75,34 @@ class AtomComposer(Composer):
 
     def _parse_feed(self, source_file):
         try:
-            with io.open(source_file, 'r', encoding='utf-8') as f:
+            with io.open(source_file, "r", encoding="utf-8") as f:
                 metadata = json.loads(f.read())
 
-            if metadata.get('entries') is None:
-                raise ValueError(_('Missing entries list.'))
+            if metadata.get("entries") is None:
+                raise ValueError(_("Missing entries list."))
 
-            entries = metadata['entries']
+            entries = metadata["entries"]
             # AtomFeed expects FeedEntry objects for the entries keyword so
             # remove it from the metadata and add it after the feed is built.
-            del metadata['entries']
+            del metadata["entries"]
 
             feed = AtomFeed(**metadata)
             [feed.add(self._make_entry(entry)) for entry in entries]
         except ValueError as error:
-            raise AbortError(_('Invalid feed {source_file}: {error}').format(
-                source_file=source_file, error=str(error)))
+            raise AbortError(
+                _("Invalid feed {source_file}: {error}").format(
+                    source_file=source_file, error=str(error)
+                )
+            )
 
         return feed
 
     def _make_entry(self, data):
         # Convert dates into datetime instances.
-        if 'updated' in data:
-            data['updated'] = date.convert(data['updated'])
+        if "updated" in data:
+            data["updated"] = date.convert(data["updated"])
 
-        if 'published' in data:
-            data['published'] = date.convert(data['published'])
+        if "published" in data:
+            data["published"] = date.convert(data["published"])
 
         return FeedEntry(**data)

@@ -1,6 +1,7 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+.pytest_cache
 
 # C extensions
 *.so
@@ -58,8 +59,12 @@ docs/_build/
 # Vim
 *.swp
 
+# VS Code
+.vscode
+
 # Handroll
 sample/output/
 
 # docs
 docs/_build
+.python-version

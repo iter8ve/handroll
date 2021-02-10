@@ -5,7 +5,7 @@ import configparser
 import os
 
 import smartypants
-from werkzeug.contrib.atom import AtomFeed, FeedEntry
+from feedwerk.atom import AtomFeed, FeedEntry
 
 from handroll import logger
 from handroll.exceptions import AbortError
@@ -14,16 +14,15 @@ from handroll.i18n import _
 
 
 class BlogPost(object):
-
     def __init__(self, **kwargs):
-        self.date = kwargs['date']
-        self.source_file = kwargs['source_file']
-        self.summary = smartypants.smartypants(kwargs['summary'])
-        self.title = smartypants.smartypants(kwargs['title'])
-        self.route = kwargs['route']
-        self.url = kwargs['url']
+        self.date = kwargs["date"]
+        self.source_file = kwargs["source_file"]
+        self.summary = smartypants.smartypants(kwargs["summary"])
+        self.title = smartypants.smartypants(kwargs["title"])
+        self.route = kwargs["route"]
+        self.url = kwargs["url"]
         # Having the posts enables a blog post to find its relationships.
-        self._posts = kwargs['posts']
+        self._posts = kwargs["posts"]
 
     def __eq__(self, other):
         if other is None:
@@ -37,7 +36,7 @@ class BlogPost(object):
         return not self.__eq__(other)
 
     def __repr__(self):
-        return 'BlogPost({}, {})'.format(self.source_file, self.date)
+        return "BlogPost({}, {})".format(self.source_file, self.date)
 
     @property
     def next(self):
@@ -70,17 +69,17 @@ class BlogExtension(Extension):
     handle_post_composition = True
 
     required_metadata = {
-        'author': 'atom_author',
-        'id': 'atom_id',
-        'title': 'atom_title',
-        'url': 'atom_url',
+        "author": "atom_author",
+        "id": "atom_id",
+        "title": "atom_title",
+        "url": "atom_url",
     }
 
     def __init__(self, config):
         super(BlogExtension, self).__init__(config)
         self.posts = {}
         self.atom_metadata = {}
-        self.atom_output = ''
+        self.atom_output = ""
         self.list_template = None
         self.list_output = None
         self._resolver = None
@@ -88,19 +87,20 @@ class BlogExtension(Extension):
 
     def on_pre_composition(self, director):
         """Check that all the required configuration exists."""
-        if not self._config.parser.has_section('blog'):
+        if not self._config.parser.has_section("blog"):
             raise AbortError(
-                _('A blog section is missing in the configuration file.'))
+                _("A blog section is missing in the configuration file.")
+            )
 
         # Collect atom feed configuration.
         for metadata, option in self.required_metadata.items():
             self._add_atom_metadata(metadata, option)
-        self.atom_output = self._get_option('atom_output')
+        self.atom_output = self._get_option("atom_output")
 
         # Collect HTML listing configuration.
-        if self._config.parser.has_option('blog', 'list_template'):
-            self.list_template = self._get_option('list_template')
-            self.list_output = self._get_option('list_output')
+        if self._config.parser.has_option("blog", "list_template"):
+            self.list_template = self._get_option("list_template")
+            self.list_output = self._get_option("list_output")
 
         # Grab the resolver from the director for determining URLs for posts.
         self._resolver = director.resolver
@@ -111,15 +111,15 @@ class BlogExtension(Extension):
             return
         self._validate_post(source_file, frontmatter)
         post = BlogPost(
-            date=frontmatter['date'],
+            date=frontmatter["date"],
             source_file=source_file,
-            summary=frontmatter.get('summary', ''),
-            title=frontmatter['title'],
+            summary=frontmatter.get("summary", ""),
+            title=frontmatter["title"],
             route=self._resolver.as_route(source_file),
             url=self._resolver.as_url(source_file),
             posts=self.posts,
         )
-        frontmatter['post'] = post
+        frontmatter["post"] = post
         if post != self.posts.get(source_file):
             self.posts[source_file] = post
             self._should_generate = True
@@ -129,7 +129,8 @@ class BlogExtension(Extension):
         if not self._should_generate:
             return
         blog_posts = sorted(
-            self.posts.values(), key=lambda p: p.date, reverse=True)
+            self.posts.values(), key=lambda p: p.date, reverse=True
+        )
         self._generate_atom_feed(director, blog_posts)
         if self.list_template is not None:
             self._generate_list_page(director, blog_posts)
@@ -137,30 +138,34 @@ class BlogExtension(Extension):
 
     def _is_post(self, frontmatter):
         """Check if the front matter looks like a blog post."""
-        is_post = frontmatter.get('blog', False)
+        is_post = frontmatter.get("blog", False)
         if type(is_post) != bool:
             raise AbortError(
-                _('Invalid blog frontmatter (expects True or False): '
-                  '{blog_value}').format(blog_value=is_post))
+                _(
+                    "Invalid blog frontmatter (expects True or False): "
+                    "{blog_value}"
+                ).format(blog_value=is_post)
+            )
         return is_post
 
     def _validate_post(self, source_file, frontmatter):
         """Validate that the post contains all the required fields."""
-        required = set([
-            'date',
-            'title',
-        ])
+        required = set(["date", "title"])
         fields = set(frontmatter.keys())
         missing = required - fields
         if missing:
-            raise AbortError(_(
-                'The blog post, {filename}, '
-                'is missing required fields: {missing_fields}'.format(
-                    filename=source_file, missing_fields=', '.join(missing))))
+            raise AbortError(
+                _(
+                    "The blog post, {filename}, "
+                    "is missing required fields: {missing_fields}".format(
+                        filename=source_file, missing_fields=", ".join(missing)
+                    )
+                )
+            )
 
     def _generate_atom_feed(self, director, blog_posts):
         """Generate the atom feed."""
-        logger.info(_('Generating Atom XML feed ...'))
+        logger.info(_("Generating Atom XML feed ..."))
         builder = FeedBuilder(self.atom_metadata)
         builder.add(blog_posts)
         output_file = os.path.join(director.outdir, self.atom_output)
@@ -168,7 +173,7 @@ class BlogExtension(Extension):
 
     def _generate_list_page(self, director, blog_posts):
         """Generate the list page."""
-        logger.info(_('Generating blog list page ...'))
+        logger.info(_("Generating blog list page ..."))
         template = director.catalog.get_template(self.list_template)
         builder = ListPageBuilder(template)
         builder.add(blog_posts)
@@ -182,11 +187,13 @@ class BlogExtension(Extension):
     def _get_option(self, option):
         """Get an option out of the blog section."""
         try:
-            return self._config.parser.get('blog', option)
+            return self._config.parser.get("blog", option)
         except configparser.NoOptionError:
             raise AbortError(
-                _('The blog extension requires the {option} option.').format(
-                    option=option))
+                _("The blog extension requires the {option} option.").format(
+                    option=option
+                )
+            )
 
 
 class BlogBuilder(object):
@@ -202,9 +209,9 @@ class BlogBuilder(object):
     def write_to(self, filepath):
         """Write the output to the provided filepath."""
         output = self._generate_output()
-        with open(filepath, 'wb') as out:
-            out.write(output.encode('utf-8'))
-            out.write(b'<!-- handrolled for excellence -->\n')
+        with open(filepath, "wb") as out:
+            out.write(output.encode("utf-8"))
+            out.write(b"<!-- handrolled for excellence -->\n")
 
 
 class FeedBuilder(BlogBuilder):
@@ -217,13 +224,15 @@ class FeedBuilder(BlogBuilder):
     def add(self, posts):
         """Add blog posts to the feed."""
         for post in posts:
-            self._feed.add(FeedEntry(
-                summary=post.summary,
-                title=post.title,
-                title_type='html',
-                url=post.url,
-                updated=post.date,
-            ))
+            self._feed.add(
+                FeedEntry(
+                    summary=post.summary,
+                    title=post.title,
+                    title_type="html",
+                    url=post.url,
+                    updated=post.date,
+                )
+            )
 
     def _generate_output(self):
         return self._feed.to_string()
@@ -234,7 +243,7 @@ class ListPageBuilder(BlogBuilder):
 
     def __init__(self, template):
         self._template = template
-        self._blog_list = ''
+        self._blog_list = ""
         self._posts = None
 
     def add(self, posts):
@@ -243,13 +252,12 @@ class ListPageBuilder(BlogBuilder):
         for post in posts:
             li_html.append(
                 u'<li><a href="{route}">{title}</a></li>'.format(
-                    route=post.route, title=post.title))
-        self._blog_list = u'\n'.join(li_html)
+                    route=post.route, title=post.title
+                )
+            )
+        self._blog_list = u"\n".join(li_html)
         self._posts = posts
 
     def _generate_output(self):
-        context = {
-            'blog_list': self._blog_list,
-            'posts': self._posts,
-        }
+        context = {"blog_list": self._blog_list, "posts": self._posts}
         return self._template.render(context)
